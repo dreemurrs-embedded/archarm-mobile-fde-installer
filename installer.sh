@@ -146,6 +146,11 @@ ENCRYNAME="alarm_install"
 ENCRYPART="/dev/mapper/$ENCRYNAME"
 
 echo "You'll now be asked to type in a new encryption key. DO NOT LOSE THIS!"
+
+# Generating LUKS header on a modern computer would make the container slow to unlock
+# on slower devices such as PinePhone.
+#
+# Unless you're happy with the phone taking an eternity to unlock, this is it for now.
 sudo cryptsetup -q -y -v luksFormat --pbkdf-memory=20721 --pbkdf-parallel=4 --pbkdf-force-iterations=4 $ROOTPART
 sudo cryptsetup open $ROOTPART $ENCRYNAME
 
