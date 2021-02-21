@@ -35,7 +35,7 @@ case $key in
                "" \
                "	-h, --help		Print this help and exit." \
                "" \
-               "This command requires: parted, sudo, wget, tar, unzip," \
+               "This command requires: parted, curl, sudo, wget, tar, unzip," \
                "mkfs.ext4, mkfs.f2fs, losetup, unsquashfs." \
                ""
 
@@ -74,15 +74,26 @@ check_dependency "mkfs.ext4"
 check_dependency "mkfs.f2fs"
 check_dependency "losetup"
 check_dependency "zstd"
+check_dependency "curl"
 
 # Image selection
 echo -e "\e[1mWhich image do you want to create?\e[0m"
 select OPTION in "PinePhone" "PineTab"; do
     case $OPTION in
-        "PinePhone" ) SQFSROOT="pinephone-latest.img";DEVICE="pinephone"; break;;
-        "PineTab" ) echo "This device is not implemented yet." && exit 1; break;;
+        "PinePhone" ) DEVICE="pinephone"; break;;
+        "PineTab" ) DEVICE="pinetab"; break;;
     esac
 done
+
+echo -e "\e[1mWhich environment would you like to install?\e[0m"
+select OPTION in "Phosh" "Barebone"; do
+    case $OPTION in
+        "Phosh" ) USR_ENV="phosh"; break;;
+        "Barebone" ) USR_ENV="barebone"; break;;
+    esac
+done
+
+SQFSROOT="archlinux-$DEVICE-$USR_ENV.sqfs"
 
 # Filesystem selection
 echo -e "\e[1mWhich filesystem would you like to use?\e[0m"
@@ -110,10 +121,16 @@ echo
 
 # Downloading images
 echo -e "\e[1mDownloading images...\e[0m"
-wget -O $SQFSROOT $DOWNLOAD_SERVER/$SQFSROOT || {
-	error "Root filesystem image download failed. Aborting."
-	exit 2
-}
+
+if [ ! -f $SQFSROOT ]; then
+	wget -O $SQFSROOT $DOWNLOAD_SERVER/$SQFSROOT || {
+		error "Root filesystem image download failed. Aborting."
+		exit 2
+	}
+fi
+
+# Checksum check, make sure the root image is the real deal.
+curl $DOWNLOAD_SERVER/$SQFSROOT.sha512sum | sha512sum -c || { error "Checksum does not match. Aborting." && rm $SQFSROOT && exit 1; }
 
 wget -O arch-install-scripts.tar.zst "https://archlinux.org/packages/extra/any/arch-install-scripts/download/" || {
 	error "arch-install-scripts download failed. Aborting."
@@ -178,7 +195,6 @@ sudo cryptsetup close $ENCRYNAME
 echo -e "\e[1mCleaning up working directory...\e[0m"
 sudo rm -f arch-install-scripts.tar.zst || true
 sudo rm -f genfstab || true
-sudo rm -f $SQFSROOT || true
 sudo rm -rf $TMPMOUNT || true
 
 echo -e "\e[32m\e[1mAll done! Please insert the card to your device and power on.\e[39m\e[0m"
