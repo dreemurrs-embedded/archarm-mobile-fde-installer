@@ -123,7 +123,7 @@ echo
 echo -e "\e[1mDownloading images...\e[0m"
 
 if [ ! -f $SQFSROOT ]; then
-	wget -O $SQFSROOT $DOWNLOAD_SERVER/$SQFSROOT || {
+	wget -c -O $SQFSROOT $DOWNLOAD_SERVER/$SQFSROOT || {
 		error "Root filesystem image download failed. Aborting."
 		exit 2
 	}
@@ -132,7 +132,7 @@ fi
 # Checksum check, make sure the root image is the real deal.
 curl $DOWNLOAD_SERVER/$SQFSROOT.sha512sum | sha512sum -c || { error "Checksum does not match. Aborting." && rm $SQFSROOT && exit 1; }
 
-wget -O arch-install-scripts.tar.zst "https://archlinux.org/packages/extra/any/arch-install-scripts/download/" || {
+wget -c -O arch-install-scripts.tar.zst "https://archlinux.org/packages/extra/any/arch-install-scripts/download/" || {
 	error "arch-install-scripts download failed. Aborting."
 	exit 2
 }
