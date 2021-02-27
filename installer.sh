@@ -122,12 +122,10 @@ echo
 # Downloading images
 echo -e "\e[1mDownloading images...\e[0m"
 
-if [ ! -f $SQFSROOT ]; then
-	wget -c -O $SQFSROOT $DOWNLOAD_SERVER/$SQFSROOT || {
-		error "Root filesystem image download failed. Aborting."
-		exit 2
-	}
-fi
+wget -c -O $SQFSROOT $DOWNLOAD_SERVER/$SQFSROOT || {
+    error "Root filesystem image download failed. Aborting."
+    exit 2
+}
 
 # Checksum check, make sure the root image is the real deal.
 curl $DOWNLOAD_SERVER/$SQFSROOT.sha512sum | sha512sum -c || { error "Checksum does not match. Aborting." && rm $SQFSROOT && exit 1; }
