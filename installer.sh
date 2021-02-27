@@ -143,9 +143,9 @@ chmod +x genfstab
 [ $FILESYSTEM = "ext4" ] && MKFS="mkfs.ext4"
 [ $FILESYSTEM = "f2fs" ] && MKFS="mkfs.f2fs"
 
-sudo parted ${DISK_IMAGE} mklabel msdos --script
-sudo parted ${DISK_IMAGE} mkpart primary fat32 1MB 256MB --script
-sudo parted ${DISK_IMAGE} mkpart primary ext4 256MB 100% --script
+sudo parted -a optimal ${DISK_IMAGE} mklabel msdos --script
+sudo parted -a optimal ${DISK_IMAGE} mkpart primary fat32 1MB 256MB --script
+sudo parted -a optimal ${DISK_IMAGE} mkpart primary ext4 256MB 100% --script
 sudo parted ${DISK_IMAGE} set 1 boot on --script
 
 # The first partition is the boot partition and the second one the root
