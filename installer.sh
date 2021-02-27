@@ -152,8 +152,8 @@ sudo parted ${DISK_IMAGE} set 1 boot on --script
 
 # The first partition is the boot partition and the second one the root
 PARTITIONS=$(lsblk $DISK_IMAGE -l | grep ' part ' | awk '{print $1}')
-BOOTPART=$(echo "$PARTITIONS" | sed -n '1p')
-ROOTPART=$(echo "$PARTITIONS" | sed -n '2p')
+BOOTPART=/dev/$(echo "$PARTITIONS" | sed -n '1p')
+ROOTPART=/dev/$(echo "$PARTITIONS" | sed -n '2p')
 
 ENCRYNAME=$(basename $(mktemp -p /dev/mapper/ -u))
 ENCRYPART="/dev/mapper/$ENCRYNAME"
