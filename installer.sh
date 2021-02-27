@@ -150,14 +150,10 @@ sudo parted ${DISK_IMAGE} mkpart primary fat32 1MB 256MB --script
 sudo parted ${DISK_IMAGE} mkpart primary ext4 256MB 100% --script
 sudo parted ${DISK_IMAGE} set 1 boot on --script
 
-# use p1, p2 extentions instead of 1, 2 when using sd drives
-if [ "$(echo $DISK_IMAGE | grep mmcblk || echo $DISK_IMAGE | grep loop)" ]; then
-	BOOTPART="${DISK_IMAGE}p1"
-	ROOTPART="${DISK_IMAGE}p2"
-else
-	BOOTPART="${DISK_IMAGE}1"
-	ROOTPART="${DISK_IMAGE}2"
-fi
+# The first partition is the boot partition and the second one the root
+PARTITIONS=$(lsblk $DISK_IMAGE -l | grep ' part ' | awk '{print $1}')
+BOOTPART=$(echo "$PARTITIONS" | sed -n '1p')
+ROOTPART=$(echo "$PARTITIONS" | sed -n '2p')
 
 ENCRYNAME="alarm_install"
 ENCRYPART="/dev/mapper/$ENCRYNAME"
