@@ -11,7 +11,7 @@
 set +e
 
 DOWNLOAD_SERVER="https://danctnix.arikawa-hi.me/rootfs/archarm-on-mobile"
-TMPMOUNT=tmpmount
+TMPMOUNT=$(mktemp -p . -d)
 
 # Parse arguments
 # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -172,7 +172,6 @@ sudo cryptsetup open $ROOTPART $ENCRYNAME
 sudo mkfs.vfat $BOOTPART
 sudo $MKFS $ENCRYPART
 
-sudo mkdir $TMPMOUNT
 sudo mount $ENCRYPART $TMPMOUNT
 sudo mkdir $TMPMOUNT/boot
 sudo mount $BOOTPART $TMPMOUNT/boot
