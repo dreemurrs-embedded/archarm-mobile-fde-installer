@@ -51,10 +51,10 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # Helper functions
-# Error out if the given command is not found on the PATH.
+# Error out if the given command is not found in PATH.
 function check_dependency {
     dependency=$1
-    command -v $dependency >/dev/null 2>&1 || {
+    which $dependency >/dev/null 2>&1 || {
         echo >&2 "${dependency} not found. Please make sure it is installed and on your PATH."; exit 1;
     }
 }
