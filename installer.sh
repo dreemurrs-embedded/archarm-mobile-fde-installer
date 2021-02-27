@@ -155,7 +155,7 @@ PARTITIONS=$(lsblk $DISK_IMAGE -l | grep ' part ' | awk '{print $1}')
 BOOTPART=$(echo "$PARTITIONS" | sed -n '1p')
 ROOTPART=$(echo "$PARTITIONS" | sed -n '2p')
 
-ENCRYNAME="alarm_install"
+ENCRYNAME=$(basename $(mktemp -p /dev/mapper/ -u))
 ENCRYPART="/dev/mapper/$ENCRYNAME"
 
 echo "You'll now be asked to type in a new encryption key. DO NOT LOSE THIS!"
