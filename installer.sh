@@ -11,7 +11,7 @@
 set +e
 
 DOWNLOAD_SERVER="https://danctnix.arikawa-hi.me/rootfs/archarm-on-mobile"
-TMPMOUNT=tmpmount
+TMPMOUNT=$(mktemp -p . -d)
 
 # Parse arguments
 # https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
@@ -51,10 +51,10 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 # Helper functions
-# Error out if the given command is not found on the PATH.
+# Error out if the given command is not found in PATH.
 function check_dependency {
     dependency=$1
-    command -v $dependency >/dev/null 2>&1 || {
+    hash $dependency >/dev/null 2>&1 || {
         echo >&2 "${dependency} not found. Please make sure it is installed and on your PATH."; exit 1;
     }
 }
@@ -122,17 +122,15 @@ echo
 # Downloading images
 echo -e "\e[1mDownloading images...\e[0m"
 
-if [ ! -f $SQFSROOT ]; then
-	wget -O $SQFSROOT $DOWNLOAD_SERVER/$SQFSROOT || {
-		error "Root filesystem image download failed. Aborting."
-		exit 2
-	}
-fi
+wget --quiet --show-progress -c -O $SQFSROOT $DOWNLOAD_SERVER/$SQFSROOT || {
+    error "Root filesystem image download failed. Aborting."
+    exit 2
+}
 
 # Checksum check, make sure the root image is the real deal.
-curl $DOWNLOAD_SERVER/$SQFSROOT.sha512sum | sha512sum -c || { error "Checksum does not match. Aborting." && rm $SQFSROOT && exit 1; }
+curl --silent --progress-meter $DOWNLOAD_SERVER/$SQFSROOT.sha512sum | sha512sum -c || { error "Checksum does not match. Aborting." && rm $SQFSROOT && exit 1; }
 
-wget -O arch-install-scripts.tar.zst "https://archlinux.org/packages/extra/any/arch-install-scripts/download/" || {
+wget --quiet --show-progress -c -O arch-install-scripts.tar.zst "https://archlinux.org/packages/extra/any/arch-install-scripts/download/" || {
 	error "arch-install-scripts download failed. Aborting."
 	exit 2
 }
@@ -145,21 +143,17 @@ chmod +x genfstab
 [ $FILESYSTEM = "ext4" ] && MKFS="mkfs.ext4"
 [ $FILESYSTEM = "f2fs" ] && MKFS="mkfs.f2fs"
 
-sudo parted ${DISK_IMAGE} mklabel msdos --script
-sudo parted ${DISK_IMAGE} mkpart primary fat32 1MB 256MB --script
-sudo parted ${DISK_IMAGE} mkpart primary ext4 256MB 100% --script
+sudo parted -a optimal ${DISK_IMAGE} mklabel msdos --script
+sudo parted -a optimal ${DISK_IMAGE} mkpart primary fat32 '0%' 256MB --script
+sudo parted -a optimal ${DISK_IMAGE} mkpart primary ext4 256MB 100% --script
 sudo parted ${DISK_IMAGE} set 1 boot on --script
 
-# use p1, p2 extentions instead of 1, 2 when using sd drives
-if [ "$(echo $DISK_IMAGE | grep mmcblk || echo $DISK_IMAGE | grep loop)" ]; then
-	BOOTPART="${DISK_IMAGE}p1"
-	ROOTPART="${DISK_IMAGE}p2"
-else
-	BOOTPART="${DISK_IMAGE}1"
-	ROOTPART="${DISK_IMAGE}2"
-fi
+# The first partition is the boot partition and the second one the root
+PARTITIONS=$(lsblk $DISK_IMAGE -l | grep ' part ' | awk '{print $1}')
+BOOTPART=/dev/$(echo "$PARTITIONS" | sed -n '1p')
+ROOTPART=/dev/$(echo "$PARTITIONS" | sed -n '2p')
 
-ENCRYNAME="alarm_install"
+ENCRYNAME=$(basename $(mktemp -p /dev/mapper/ -u))
 ENCRYPART="/dev/mapper/$ENCRYNAME"
 
 echo "You'll now be asked to type in a new encryption key. DO NOT LOSE THIS!"
@@ -176,7 +170,6 @@ sudo cryptsetup open $ROOTPART $ENCRYNAME
 sudo mkfs.vfat $BOOTPART
 sudo $MKFS $ENCRYPART
 
-sudo mkdir $TMPMOUNT
 sudo mount $ENCRYPART $TMPMOUNT
 sudo mkdir $TMPMOUNT/boot
 sudo mount $BOOTPART $TMPMOUNT/boot
