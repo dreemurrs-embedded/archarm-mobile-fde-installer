@@ -94,7 +94,10 @@ select OPTION in "Phosh" "Plasma" "Barebone"; do
     esac
 done
 
-SQFSROOT="archlinux-$DEVICE-$USR_ENV.sqfs"
+SQFSDATE=$(curl -s -f $DOWNLOAD_SERVER/version.txt || echo BAD)
+SQFSROOT="archlinux-$DEVICE-$USR_ENV-$SQFSDATE.sqfs"
+
+[ $SQFSDATE = "BAD" ] && { error "Failed to fetch for the latest version. The server may be down, please try again later." && exit 1; }
 
 # Filesystem selection
 echo -e "\e[1mWhich filesystem would you like to use?\e[0m"
