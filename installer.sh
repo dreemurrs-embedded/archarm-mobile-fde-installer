@@ -86,10 +86,11 @@ select OPTION in "PinePhone" "PineTab"; do
 done
 
 echo -e "\e[1mWhich environment would you like to install?\e[0m"
-select OPTION in "Phosh" "Plasma" "Barebone"; do
+select OPTION in "Phosh" "Plasma" "Sxmo" "Barebone"; do
     case $OPTION in
         "Phosh" ) USR_ENV="phosh"; break;;
         "Plasma" ) USR_ENV="plasma"; break;;
+        "Sxmo" ) USR_ENV="sxmo"; break;;
         "Barebone" ) USR_ENV="barebone"; break;;
     esac
 done
