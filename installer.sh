@@ -60,7 +60,7 @@ function check_dependency {
 }
 
 function error {
-    echo -e "\e[41m\e[5mERROR:\e[49m\e[25m $1"
+    echo -e "\e[101;97m\e[5mERROR:\e[49;39m\e[25m $1"
 }
 
 # Check dependencies
@@ -119,7 +119,7 @@ echo "Some commands require root permissions, you might be asked to enter your s
 
 # Make sure people won't pick the wrong thing and ultimately erase the disk
 echo
-echo -e "\e[31m\e[1mARE YOU SURE \e[5m\e[4m${DISK_IMAGE}\e[24m\e[25m IS WHAT YOU PICKED?\e[39m\e[0m"
+echo -e "\e[91m\e[1mARE YOU SURE \e[5m\e[4m${DISK_IMAGE}\e[24m\e[25m IS WHAT YOU PICKED?\e[39m\e[0m"
 read -p "Confirm device node: " CONFIRM_DISK_IMAGE
 [ "$DISK_IMAGE" != "$CONFIRM_DISK_IMAGE" ] && error "The device node mismatched. Aborting." && exit 1
 echo
@@ -195,4 +195,4 @@ sudo rm -f arch-install-scripts.tar.zst || true
 sudo rm -f genfstab || true
 sudo rm -rf $TMPMOUNT || true
 
-echo -e "\e[32m\e[1mAll done! Please insert the card to your device and power on.\e[39m\e[0m"
+echo -e "\e[92m\e[1mAll done! Please insert the card to your device and power on.\e[39m\e[0m"
