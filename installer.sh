@@ -78,9 +78,10 @@ check_dependency "curl"
 
 # Image selection
 echo -e "\e[1mWhich image do you want to create?\e[0m"
-select OPTION in "PinePhone" "PineTab"; do
+select OPTION in "PinePhone" "PinePhone-Pro" "PineTab"; do
     case $OPTION in
         "PinePhone" ) DEVICE="pinephone"; break;;
+		"PinePhone-Pro" ) DEVICE="pinephone-pro"; break;;
         "PineTab" ) DEVICE="pinetab"; break;;
     esac
 done
