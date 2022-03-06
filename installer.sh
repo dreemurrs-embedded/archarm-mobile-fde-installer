@@ -149,6 +149,7 @@ chmod +x genfstab
 [ $FILESYSTEM = "ext4" ] && MKFS="mkfs.ext4"
 [ $FILESYSTEM = "f2fs" ] && MKFS="mkfs.f2fs"
 
+sudo parted -a optimal ${DISK_IMAGE} mklabel msdos --script
 if [ $DEVICE == "pinephone-pro" ]; then
   sudo parted -a optimal ${DISK_IMAGE} mkpart primary fat32 65536s 589823s --script
   sudo parted -a optimal ${DISK_IMAGE} mkpart primary ext4 589824s 100% --script
@@ -156,6 +157,7 @@ else
   sudo parted -a optimal ${DISK_IMAGE} mkpart primary fat32 '0%' 256MB --script
   sudo parted -a optimal ${DISK_IMAGE} mkpart primary ext4 256MB 100% --script
 fi
+sudo parted ${DISK_IMAGE} set 1 boot on --script
 
 # The first partition is the boot partition and the second one the root
 PARTITIONS=$(lsblk $DISK_IMAGE -l | grep ' part ' | awk '{print $1}')
