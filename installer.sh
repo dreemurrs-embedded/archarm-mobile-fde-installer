@@ -26,7 +26,7 @@ case $key in
         echo ""
         printf '%s\n' \
                "This script will download the latest encrypted image for the" \
-               "PinePhone and PineTab. It downloads and create a image for the user" \
+               "PinePhone, PinePhone Pro, and PineTab. It downloads and create a image for the user" \
                "to flash on their device or SD card." \
                "" \
                "usage: $0 " \
