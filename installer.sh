@@ -105,7 +105,7 @@ SQFSROOT="archlinux-$DEVICE-$USR_ENV-$SQFSDATE.sqfs"
 echo -e "\e[1mWhich filesystem would you like to use?\e[0m"
 select OPTION in "ext4" "f2fs"; do
     case $OPTION in
-        "ext4" ) FILESYSTEM="ext4"; gbreak;;
+        "ext4" ) FILESYSTEM="ext4"; break;;
         "f2fs" ) FILESYSTEM="f2fs"; break;;
     esac
 done
