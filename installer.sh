@@ -190,12 +190,8 @@ sudo unsquashfs -f -d $TMPMOUNT $SQFSROOT
 ./genfstab -U $TMPMOUNT | grep UUID | grep -v "swap" | sudo tee -a $TMPMOUNT/etc/fstab
 sudo sed -i "s:UUID=[0-9a-f-]*\s*/\s:/dev/mapper/cryptroot / :g" $TMPMOUNT/etc/fstab
 
-if [ $DEVICE == "pinephone-pro" ]; then
-  sudo dd if=${TMPMOUNT}/boot/idbloader.img of=${DISK_IMAGE} seek=64 conv=notrunc,fsync
-  sudo dd if=${TMPMOUNT}/boot/u-boot.itb of=${DISK_IMAGE} seek=16384 conv=notrunc,fsync
-else
-    sudo dd if=${TMPMOUNT}/boot/u-boot-sunxi-with-spl-${DEVICE}-552.bin of=${DISK_IMAGE} bs=8k seek=1
-fi
+[ "$DEVICE" != "pinephone-pro" ] && sudo dd if=${TMPMOUNT}/boot/u-boot-sunxi-with-spl-${DEVICE}-552.bin of=${DISK_IMAGE} bs=8k seek=1
+
 
 sudo umount -R $TMPMOUNT
 sudo cryptsetup close $ENCRYNAME
