@@ -26,7 +26,7 @@ case $key in
         echo ""
         printf '%s\n' \
                "This script will download the latest encrypted image for the" \
-               "PinePhone and PineTab. It downloads and create a image for the user" \
+               "PinePhone, PinePhone Pro, and PineTab. It downloads and create a image for the user" \
                "to flash on their device or SD card." \
                "" \
                "usage: $0 " \
@@ -78,9 +78,10 @@ check_dependency "curl"
 
 # Image selection
 echo -e "\e[1mWhich image do you want to create?\e[0m"
-select OPTION in "PinePhone" "PineTab"; do
+select OPTION in "PinePhone" "PinePhone Pro" "PineTab"; do
     case $OPTION in
         "PinePhone" ) DEVICE="pinephone"; break;;
+        "PinePhone Pro" ) DEVICE="pinephone-pro"; break;;
         "PineTab" ) DEVICE="pinetab"; break;;
     esac
 done
@@ -149,8 +150,13 @@ chmod +x genfstab
 [ $FILESYSTEM = "f2fs" ] && MKFS="mkfs.f2fs"
 
 sudo parted -a optimal ${DISK_IMAGE} mklabel msdos --script
-sudo parted -a optimal ${DISK_IMAGE} mkpart primary fat32 '0%' 256MB --script
-sudo parted -a optimal ${DISK_IMAGE} mkpart primary ext4 256MB 100% --script
+if [ $DEVICE == "pinephone-pro" ]; then
+  sudo parted -a optimal ${DISK_IMAGE} mkpart primary fat32 65536s 589823s --script
+  sudo parted -a optimal ${DISK_IMAGE} mkpart primary ext4 589824s 100% --script
+else 
+  sudo parted -a optimal ${DISK_IMAGE} mkpart primary fat32 '0%' 256MB --script
+  sudo parted -a optimal ${DISK_IMAGE} mkpart primary ext4 256MB 100% --script
+fi
 sudo parted ${DISK_IMAGE} set 1 boot on --script
 
 # The first partition is the boot partition and the second one the root
@@ -184,7 +190,8 @@ sudo unsquashfs -f -d $TMPMOUNT $SQFSROOT
 ./genfstab -U $TMPMOUNT | grep UUID | grep -v "swap" | sudo tee -a $TMPMOUNT/etc/fstab
 sudo sed -i "s:UUID=[0-9a-f-]*\s*/\s:/dev/mapper/cryptroot / :g" $TMPMOUNT/etc/fstab
 
-sudo dd if=${TMPMOUNT}/boot/u-boot-sunxi-with-spl-${DEVICE}-552.bin of=${DISK_IMAGE} bs=8k seek=1
+[ "$DEVICE" != "pinephone-pro" ] && sudo dd if=${TMPMOUNT}/boot/u-boot-sunxi-with-spl-${DEVICE}-552.bin of=${DISK_IMAGE} bs=8k seek=1
+
 
 sudo umount -R $TMPMOUNT
 sudo cryptsetup close $ENCRYNAME
