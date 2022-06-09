@@ -175,7 +175,10 @@ sudo cryptsetup open $ROOTPART $ENCRYNAME
 sudo mkfs.vfat $BOOTPART
 sudo $MKFS $ENCRYPART
 
-sudo mount $ENCRYPART $TMPMOUNT
+sudo mount $ENCRYPART $TMPMOUNT || {
+    error "Failed to mount encrypted partition. Aborting."
+    exit 2
+}
 sudo mkdir $TMPMOUNT/boot
 sudo mount $BOOTPART $TMPMOUNT/boot
 
