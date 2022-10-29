@@ -36,7 +36,9 @@ case $key in
                "	-h, --help		Print this help and exit." \
                "" \
                "This command requires: parted, curl, sudo, wget, tar, unzip," \
-               "mkfs.ext4, mkfs.f2fs, losetup, unsquashfs." \
+               "losetup, unsquashfs." \
+               "" \
+               "Optional: btrfs, mkfs.ext4, mkfs.f2fs, mkfs.btrfs." \
                ""
 
         exit 0
@@ -70,8 +72,6 @@ check_dependency "sudo"
 check_dependency "wget"
 check_dependency "tar"
 check_dependency "unsquashfs"
-check_dependency "mkfs.ext4"
-check_dependency "mkfs.f2fs"
 check_dependency "losetup"
 check_dependency "zstd"
 check_dependency "curl"
@@ -102,10 +102,21 @@ SQFSROOT="archlinux-$DEVICE-$USR_ENV-$SQFSDATE.sqfs"
 
 # Filesystem selection
 echo -e "\e[1mWhich filesystem would you like to use?\e[0m"
-select OPTION in "ext4" "f2fs"; do
+select OPTION in "ext4" "f2fs" "btrfs"; do
     case $OPTION in
-        "ext4" ) FILESYSTEM="ext4"; break;;
-        "f2fs" ) FILESYSTEM="f2fs"; break;;
+        "ext4" )
+            FILESYSTEM="ext4"
+            check_dependency "mkfs.ext4"
+            break;;
+        "f2fs" )
+            FILESYSTEM="f2fs"
+            check_dependency "mkfs.f2fs"
+            break;;
+        "btrfs" )
+            FILESYSTEM="btrfs"
+            check_dependency "btrfs"
+            check_dependency "mkfs.btrfs"
+            break;;
     esac
 done
 
@@ -145,8 +156,9 @@ chmod +x genfstab
 
 [ ! -e "genfstab" ] && error "Failed to locate genfstab. Aborting." && exit 2
 
-[ $FILESYSTEM = "ext4" ] && MKFS="mkfs.ext4"
-[ $FILESYSTEM = "f2fs" ] && MKFS="mkfs.f2fs"
+[ $FILESYSTEM = "ext4" ]  && MKFS="mkfs.ext4"
+[ $FILESYSTEM = "f2fs" ]  && MKFS="mkfs.f2fs"
+[ $FILESYSTEM = "btrfs" ] && MKFS="mkfs.btrfs"
 
 sudo parted -a optimal ${DISK_IMAGE} mklabel msdos --script
 sudo parted -a optimal ${DISK_IMAGE} mkpart primary fat32 '0%' 256MB --script
@@ -176,6 +188,19 @@ sudo mkfs.vfat $BOOTPART
 sudo $MKFS $ENCRYPART
 
 sudo mount $ENCRYPART $TMPMOUNT
+if [ $FILESYSTEM = "btrfs" ]; then
+    sudo btrfs subvolume create $TMPMOUNT/@
+    sudo btrfs subvolume create $TMPMOUNT/@home
+    sudo btrfs subvolume create $TMPMOUNT/@pkg
+    sudo btrfs subvolume create $TMPMOUNT/@log
+    sudo btrfs subvolume set-default $TMPMOUNT/@
+    sudo umount $TMPMOUNT
+    sudo mount $ENCRYPART $TMPMOUNT
+    sudo mkdir -p $TMPMOUNT/{home,var/{cache/pacman/pkg,log}}
+    sudo mount -o subvol=@home $ENCRYPART $TMPMOUNT/home
+    sudo mount -o subvol=@pkg  $ENCRYPART $TMPMOUNT/var/cache/pacman/pkg
+    sudo mount -o subvol=@log  $ENCRYPART $TMPMOUNT/var/log
+fi
 sudo mkdir $TMPMOUNT/boot
 sudo mount $BOOTPART $TMPMOUNT/boot
 
